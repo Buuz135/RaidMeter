@@ -9,10 +9,12 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
 import net.minecraft.command.ISuggestionProvider;
 import net.minecraft.item.DyeColor;
+import net.minecraft.util.text.StringTextComponent;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,7 +29,9 @@ public class RaidMeterCommandHandler {
                 Commands.literal("raidmeter")
                         .then(getAdd())
                         .then(getRemove())
-                        .then(getModify()));
+                        .then(getModify())
+                        .then(getInfo())
+        );
     }
 
     public static LiteralArgumentBuilder<CommandSource> getAdd(){
@@ -70,6 +74,19 @@ public class RaidMeterCommandHandler {
                 );
     }
 
+    public static LiteralArgumentBuilder<CommandSource> getInfo() {
+        return Commands.literal("info")
+                .then(Commands.argument("id", StringArgumentType.word())
+                        .suggests((context, builder) -> ISuggestionProvider.suggest(RaidMeterWorldSavedData.getInstance(context.getSource().getWorld()).map(raidMeterWorldSavedData -> raidMeterWorldSavedData.getMeters().keySet()).orElse(Collections.EMPTY_SET), builder))
+                        .then(Commands.literal("max_amount").executes(context -> info(context, ModifyType.MAX_AMOUNT)))
+                        .then(Commands.literal("current_amount").executes(context -> info(context, ModifyType.CURRENT_AMOUNT)))
+                        .then(Commands.literal("position").executes(context -> info(context, ModifyType.POSITION)))
+                        .then(Commands.literal("type").executes(context -> info(context, ModifyType.TYPE)))
+                        .then(Commands.literal("name").executes(context -> info(context, ModifyType.NAME)))
+                        .then(Commands.literal("color").executes(context -> info(context, ModifyType.COLOR)))
+                );
+    }
+
     private static int remove(CommandContext<CommandSource> context) {
         RaidMeterWorldSavedData data = RaidMeterWorldSavedData.getInstance(context.getSource().getWorld()).orElse(null);
         if (data != null) {
@@ -108,6 +125,36 @@ public class RaidMeterCommandHandler {
                 }
                 if (type == ModifyType.COLOR){
                     meterObject.setColor(DyeColor.valueOf(context.getArgument("color", String.class)).getTextColor());
+                }
+                data.markDirty(context.getSource().getWorld());
+            }
+            return 1;
+        }
+        return 0;
+    }
+
+    private static int info(CommandContext<CommandSource> context, ModifyType type) throws CommandSyntaxException {
+        RaidMeterWorldSavedData data = RaidMeterWorldSavedData.getInstance(context.getSource().getWorld()).orElse(null);
+        if (data != null) {
+            RaidMeterObject meterObject = data.getMeters().get(context.getArgument("id", String.class));
+            if (meterObject != null){
+                if (type == ModifyType.MAX_AMOUNT){
+                    context.getSource().asPlayer().sendStatusMessage(new StringTextComponent("Max amount: " + meterObject.getMaxProgress()), false);
+                }
+                if (type == ModifyType.CURRENT_AMOUNT){
+                    context.getSource().asPlayer().sendStatusMessage(new StringTextComponent("Current amount: " + meterObject.getCurrentProgress()), false);
+                }
+                if (type == ModifyType.POSITION){
+                    context.getSource().asPlayer().sendStatusMessage(new StringTextComponent("Position: " + meterObject.getMeterPosition().name()), false);
+                }
+                if (type == ModifyType.TYPE){
+                    context.getSource().asPlayer().sendStatusMessage(new StringTextComponent("Type: " + meterObject.getMeterRenderType().name()), false);
+                }
+                if (type == ModifyType.NAME){
+                    context.getSource().asPlayer().sendStatusMessage(new StringTextComponent("Name: " + meterObject.getName()), false);
+                }
+                if (type == ModifyType.COLOR){
+                    context.getSource().asPlayer().sendStatusMessage(new StringTextComponent("Color: " + meterObject.getColor()), false);
                 }
                 data.markDirty(context.getSource().getWorld());
             }
