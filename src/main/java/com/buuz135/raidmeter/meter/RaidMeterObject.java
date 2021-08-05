@@ -9,7 +9,9 @@ import net.minecraft.nbt.CompoundNBT;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.util.INBTSerializable;
 
-import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
+
 
 public class RaidMeterObject implements INBTSerializable<CompoundNBT> {
 
@@ -21,6 +23,7 @@ public class RaidMeterObject implements INBTSerializable<CompoundNBT> {
     private MeterPosition meterPosition;
     private MeterRenderType meterRenderType;
     private int color;
+    private List<String> visibleToPlayers;
 
     public RaidMeterObject(String id, String name, int maxProgress, int currentProgress, MeterPosition meterPosition, MeterRenderType meterRenderType) {
         this.name = name;
@@ -31,6 +34,7 @@ public class RaidMeterObject implements INBTSerializable<CompoundNBT> {
         this.currentVisualProgress = currentProgress;
         this.id = id;
         this.color = DyeColor.CYAN.getTextColor();
+        this.visibleToPlayers = new ArrayList<>();
     }
 
     public int getMaxProgress() {
@@ -117,6 +121,14 @@ public class RaidMeterObject implements INBTSerializable<CompoundNBT> {
         return render;
     }
 
+    public List<String> getVisibleToPlayers() {
+        return visibleToPlayers;
+    }
+
+    public String getId() {
+        return id;
+    }
+
     @Override
     public CompoundNBT serializeNBT() {
         CompoundNBT compoundNBT = new CompoundNBT();
@@ -128,6 +140,13 @@ public class RaidMeterObject implements INBTSerializable<CompoundNBT> {
         compoundNBT.putString("MeterPosition", meterPosition.name());
         compoundNBT.putString("MeterType", meterRenderType.name());
         compoundNBT.putInt("Color", color);
+        if (!visibleToPlayers.isEmpty()){
+            CompoundNBT players = new CompoundNBT();
+            for (int i = 0; i < visibleToPlayers.size(); i++) {
+                players.putString(i + "", visibleToPlayers.get(i));
+            }
+            compoundNBT.put("VisiblePlayers", players);
+        }
         return compoundNBT;
     }
 
@@ -141,5 +160,12 @@ public class RaidMeterObject implements INBTSerializable<CompoundNBT> {
         this.meterPosition = MeterPosition.valueOf(nbt.getString("MeterPosition"));
         this.meterRenderType = MeterRenderType.valueOf(nbt.getString("MeterType"));
         this.color = nbt.getInt("Color");
+        this.visibleToPlayers = new ArrayList<>();
+        if (nbt.contains("VisiblePlayers")){
+            CompoundNBT players = nbt.getCompound("VisiblePlayers");
+            for (String s : players.keySet()) {
+                this.visibleToPlayers.add(players.getString(s));
+            }
+        }
     }
 }
