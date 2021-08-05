@@ -5,7 +5,7 @@ With **RaidMeter** you can display progress you make in game and trigger somethi
 This mod has the **/raidmeter** command to set everything up:
 * /raidmeter add id display_name max_amount current_amount position type
 * /raidmeter remove id
-* /raidmeter modify id add|set|color|current_amount|max_amount|name|position|type
+* /raidmeter modify id add|set|color|current_amount|max_amount|name|position|type|display_add|display_remove
 * /raidmeter info id color|current_amount|max_amount|name|position|type
 
 The add command allows you to create new meters, the remove command allows you to remove a meter, the modify command will allow you to alter any value of the meter. The info command allows you to check the values of the meter. Command autocomplete will help you a lot through the commands, if something doesn't have autocomplete is probably a number.
