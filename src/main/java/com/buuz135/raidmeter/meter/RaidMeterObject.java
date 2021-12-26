@@ -114,7 +114,7 @@ public class RaidMeterObject implements INBTSerializable<CompoundNBT> {
     public boolean tick(){
         boolean render = renderTick();
         if (this.currentVisualProgress >= this.maxProgress){
-            this.currentProgress = 0;
+            this.currentProgress = Math.max(0 , this.currentProgress - this.maxProgress);
             MinecraftForge.EVENT_BUS.post(new RaidMeterEvent.Complete(this));
             return true;
         }
