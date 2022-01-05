@@ -10,14 +10,14 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import net.minecraft.command.CommandSource;
-import net.minecraft.command.Commands;
-import net.minecraft.command.ISuggestionProvider;
-import net.minecraft.command.arguments.EntityArgument;
-import net.minecraft.command.arguments.EntitySelector;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.item.DyeColor;
-import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.commands.SharedSuggestionProvider;
+import net.minecraft.commands.arguments.EntityArgument;
+import net.minecraft.commands.arguments.selector.EntitySelector;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.DyeColor;
+import net.minecraft.network.chat.TextComponent;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 public class RaidMeterCommandHandler {
 
 
-    public static void register(CommandDispatcher<CommandSource> dispatcher) {
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(
                 Commands.literal("raidmeter")
                         .then(getAdd())
@@ -36,14 +36,14 @@ public class RaidMeterCommandHandler {
         );
     }
 
-    public static LiteralArgumentBuilder<CommandSource> getAdd() {
+    public static LiteralArgumentBuilder<CommandSourceStack> getAdd() {
         return Commands.literal("add")
                 .then(Commands.argument("id", StringArgumentType.word())
                         .then(Commands.argument("display_name", StringArgumentType.string())
                                 .then(Commands.argument("max_amount", IntegerArgumentType.integer(0, Integer.MAX_VALUE))
                                         .then(Commands.argument("current_amount", IntegerArgumentType.integer(0, Integer.MAX_VALUE))
-                                                .then(Commands.argument("position", StringArgumentType.word()).suggests((context, builder) -> ISuggestionProvider.suggest(Arrays.stream(MeterPosition.values()).map(Enum::name).collect(Collectors.toList()), builder))
-                                                        .then(Commands.argument("type", StringArgumentType.word()).suggests((context, builder) -> ISuggestionProvider.suggest(Arrays.stream(MeterRenderType.values()).map(Enum::name).collect(Collectors.toList()), builder))
+                                                .then(Commands.argument("position", StringArgumentType.word()).suggests((context, builder) -> SharedSuggestionProvider.suggest(Arrays.stream(MeterPosition.values()).map(Enum::name).collect(Collectors.toList()), builder))
+                                                        .then(Commands.argument("type", StringArgumentType.word()).suggests((context, builder) -> SharedSuggestionProvider.suggest(Arrays.stream(MeterRenderType.values()).map(Enum::name).collect(Collectors.toList()), builder))
                                                                 .executes(RaidMeterCommandHandler::add)
                                                         )
                                                 )
@@ -53,35 +53,35 @@ public class RaidMeterCommandHandler {
                 );
     }
 
-    public static LiteralArgumentBuilder<CommandSource> getRemove() {
+    public static LiteralArgumentBuilder<CommandSourceStack> getRemove() {
         return Commands.literal("remove")
                 .then(Commands.argument("id", StringArgumentType.word())
-                        .suggests((context, builder) -> ISuggestionProvider.suggest(RaidMeterWorldSavedData.getInstance(context.getSource().getWorld()).map(raidMeterWorldSavedData -> raidMeterWorldSavedData.getMeters().keySet()).orElse(Collections.EMPTY_SET), builder))
+                        .suggests((context, builder) -> SharedSuggestionProvider.suggest(RaidMeterWorldSavedData.getInstance(context.getSource().getLevel()).map(raidMeterWorldSavedData -> raidMeterWorldSavedData.getMeters().keySet()).orElse(Collections.EMPTY_SET), builder))
                         .executes(RaidMeterCommandHandler::remove)
                 );
     }
 
-    public static LiteralArgumentBuilder<CommandSource> getModify() {
+    public static LiteralArgumentBuilder<CommandSourceStack> getModify() {
         return Commands.literal("modify")
                 .then(Commands.argument("id", StringArgumentType.word())
-                        .suggests((context, builder) -> ISuggestionProvider.suggest(RaidMeterWorldSavedData.getInstance(context.getSource().getWorld()).map(raidMeterWorldSavedData -> raidMeterWorldSavedData.getMeters().keySet()).orElse(Collections.EMPTY_SET), builder))
+                        .suggests((context, builder) -> SharedSuggestionProvider.suggest(RaidMeterWorldSavedData.getInstance(context.getSource().getLevel()).map(raidMeterWorldSavedData -> raidMeterWorldSavedData.getMeters().keySet()).orElse(Collections.EMPTY_SET), builder))
                         .then(Commands.literal("max_amount").then(Commands.argument("max_amount", IntegerArgumentType.integer(0, Integer.MAX_VALUE)).executes(context -> modify(context, ModifyType.MAX_AMOUNT))))
                         .then(Commands.literal("current_amount").then(Commands.argument("amount", IntegerArgumentType.integer(0, Integer.MAX_VALUE)).executes(context -> modify(context, ModifyType.CURRENT_AMOUNT))))
                         .then(Commands.literal("add").then(Commands.argument("amount", IntegerArgumentType.integer(Integer.MIN_VALUE, Integer.MAX_VALUE)).executes(context -> modify(context, ModifyType.ADD))))
                         .then(Commands.literal("set").then(Commands.argument("amount", IntegerArgumentType.integer(Integer.MIN_VALUE, Integer.MAX_VALUE)).executes(context -> modify(context, ModifyType.ADD))))
-                        .then(Commands.literal("position").then(Commands.argument("position", StringArgumentType.word()).suggests((context, builder) -> ISuggestionProvider.suggest(Arrays.stream(MeterPosition.values()).map(Enum::name).collect(Collectors.toList()), builder)).executes(context -> modify(context, ModifyType.POSITION))))
-                        .then(Commands.literal("type").then(Commands.argument("type", StringArgumentType.word()).suggests((context, builder) -> ISuggestionProvider.suggest(Arrays.stream(MeterRenderType.values()).map(Enum::name).collect(Collectors.toList()), builder)).executes(context -> modify(context, ModifyType.TYPE))))
+                        .then(Commands.literal("position").then(Commands.argument("position", StringArgumentType.word()).suggests((context, builder) -> SharedSuggestionProvider.suggest(Arrays.stream(MeterPosition.values()).map(Enum::name).collect(Collectors.toList()), builder)).executes(context -> modify(context, ModifyType.POSITION))))
+                        .then(Commands.literal("type").then(Commands.argument("type", StringArgumentType.word()).suggests((context, builder) -> SharedSuggestionProvider.suggest(Arrays.stream(MeterRenderType.values()).map(Enum::name).collect(Collectors.toList()), builder)).executes(context -> modify(context, ModifyType.TYPE))))
                         .then(Commands.literal("name").then(Commands.argument("name", StringArgumentType.string()).executes(context -> modify(context, ModifyType.NAME))))
-                        .then(Commands.literal("color").then(Commands.argument("color", StringArgumentType.string()).suggests((context, builder) -> ISuggestionProvider.suggest(Arrays.stream(DyeColor.values()).map(Enum::name).collect(Collectors.toList()), builder)).executes(context -> modify(context, ModifyType.COLOR))))
+                        .then(Commands.literal("color").then(Commands.argument("color", StringArgumentType.string()).suggests((context, builder) -> SharedSuggestionProvider.suggest(Arrays.stream(DyeColor.values()).map(Enum::name).collect(Collectors.toList()), builder)).executes(context -> modify(context, ModifyType.COLOR))))
                         .then(Commands.literal("display_add").then(Commands.argument("player", EntityArgument.players()).executes(context -> modify(context, ModifyType.DISPLAY_ADD))))
                         .then(Commands.literal("display_remove").then(Commands.argument("player", EntityArgument.players()).executes(context -> modify(context, ModifyType.DISPLAY_REMOVE))))
                 );
     }
 
-    public static LiteralArgumentBuilder<CommandSource> getInfo() {
+    public static LiteralArgumentBuilder<CommandSourceStack> getInfo() {
         return Commands.literal("info")
                 .then(Commands.argument("id", StringArgumentType.word())
-                        .suggests((context, builder) -> ISuggestionProvider.suggest(RaidMeterWorldSavedData.getInstance(context.getSource().getWorld()).map(raidMeterWorldSavedData -> raidMeterWorldSavedData.getMeters().keySet()).orElse(Collections.EMPTY_SET), builder))
+                        .suggests((context, builder) -> SharedSuggestionProvider.suggest(RaidMeterWorldSavedData.getInstance(context.getSource().getLevel()).map(raidMeterWorldSavedData -> raidMeterWorldSavedData.getMeters().keySet()).orElse(Collections.EMPTY_SET), builder))
                         .then(Commands.literal("max_amount").executes(context -> info(context, ModifyType.MAX_AMOUNT)))
                         .then(Commands.literal("current_amount").executes(context -> info(context, ModifyType.CURRENT_AMOUNT)))
                         .then(Commands.literal("position").executes(context -> info(context, ModifyType.POSITION)))
@@ -91,18 +91,18 @@ public class RaidMeterCommandHandler {
                 );
     }
 
-    private static int remove(CommandContext<CommandSource> context) {
-        RaidMeterWorldSavedData data = RaidMeterWorldSavedData.getInstance(context.getSource().getWorld()).orElse(null);
+    private static int remove(CommandContext<CommandSourceStack> context) {
+        RaidMeterWorldSavedData data = RaidMeterWorldSavedData.getInstance(context.getSource().getLevel()).orElse(null);
         if (data != null) {
             data.getMeters().remove(context.getArgument("id", String.class));
-            data.markDirty(context.getSource().getWorld());
+            data.markDirty(context.getSource().getLevel());
             return 1;
         }
         return 0;
     }
 
-    private static int modify(CommandContext<CommandSource> context, ModifyType type) throws CommandSyntaxException {
-        RaidMeterWorldSavedData data = RaidMeterWorldSavedData.getInstance(context.getSource().getWorld()).orElse(null);
+    private static int modify(CommandContext<CommandSourceStack> context, ModifyType type) throws CommandSyntaxException {
+        RaidMeterWorldSavedData data = RaidMeterWorldSavedData.getInstance(context.getSource().getLevel()).orElse(null);
         if (data != null) {
             RaidMeterObject meterObject = data.getMeters().get(context.getArgument("id", String.class));
             if (meterObject != null) {
@@ -131,58 +131,58 @@ public class RaidMeterCommandHandler {
                     meterObject.setColor(DyeColor.valueOf(context.getArgument("color", String.class)).getTextColor());
                 }
                 if (type == ModifyType.DISPLAY_ADD) {
-                    for (ServerPlayerEntity player : context.getArgument("player", EntitySelector.class).selectPlayers(context.getSource())) {
-                        String uuid = player.getUniqueID().toString();
+                    for (ServerPlayer player : context.getArgument("player", EntitySelector.class).findPlayers(context.getSource())) {
+                        String uuid = player.getUUID().toString();
                         if (!meterObject.getVisibleToPlayers().contains(uuid)) {
                             meterObject.getVisibleToPlayers().add(uuid);
                         }
                     }
                 }
                 if (type == ModifyType.DISPLAY_REMOVE) {
-                    for (ServerPlayerEntity player : context.getArgument("player", EntitySelector.class).selectPlayers(context.getSource())) {
-                        String uuid = player.getUniqueID().toString();
+                    for (ServerPlayer player : context.getArgument("player", EntitySelector.class).findPlayers(context.getSource())) {
+                        String uuid = player.getUUID().toString();
                         meterObject.getVisibleToPlayers().remove(uuid);
                     }
                 }
-                data.markDirty(context.getSource().getWorld());
+                data.markDirty(context.getSource().getLevel());
             }
             return 1;
         }
         return 0;
     }
 
-    private static int info(CommandContext<CommandSource> context, ModifyType type) throws CommandSyntaxException {
-        RaidMeterWorldSavedData data = RaidMeterWorldSavedData.getInstance(context.getSource().getWorld()).orElse(null);
+    private static int info(CommandContext<CommandSourceStack> context, ModifyType type) throws CommandSyntaxException {
+        RaidMeterWorldSavedData data = RaidMeterWorldSavedData.getInstance(context.getSource().getLevel()).orElse(null);
         if (data != null) {
             RaidMeterObject meterObject = data.getMeters().get(context.getArgument("id", String.class));
             if (meterObject != null) {
                 if (type == ModifyType.MAX_AMOUNT) {
-                    context.getSource().asPlayer().sendStatusMessage(new StringTextComponent("Max amount: " + meterObject.getMaxProgress()), false);
+                    context.getSource().getPlayerOrException().displayClientMessage(new TextComponent("Max amount: " + meterObject.getMaxProgress()), false);
                 }
                 if (type == ModifyType.CURRENT_AMOUNT) {
-                    context.getSource().asPlayer().sendStatusMessage(new StringTextComponent("Current amount: " + meterObject.getCurrentProgress()), false);
+                    context.getSource().getPlayerOrException().displayClientMessage(new TextComponent("Current amount: " + meterObject.getCurrentProgress()), false);
                 }
                 if (type == ModifyType.POSITION) {
-                    context.getSource().asPlayer().sendStatusMessage(new StringTextComponent("Position: " + meterObject.getMeterPosition().name()), false);
+                    context.getSource().getPlayerOrException().displayClientMessage(new TextComponent("Position: " + meterObject.getMeterPosition().name()), false);
                 }
                 if (type == ModifyType.TYPE) {
-                    context.getSource().asPlayer().sendStatusMessage(new StringTextComponent("Type: " + meterObject.getMeterRenderType().name()), false);
+                    context.getSource().getPlayerOrException().displayClientMessage(new TextComponent("Type: " + meterObject.getMeterRenderType().name()), false);
                 }
                 if (type == ModifyType.NAME) {
-                    context.getSource().asPlayer().sendStatusMessage(new StringTextComponent("Name: " + meterObject.getName()), false);
+                    context.getSource().getPlayerOrException().displayClientMessage(new TextComponent("Name: " + meterObject.getName()), false);
                 }
                 if (type == ModifyType.COLOR) {
-                    context.getSource().asPlayer().sendStatusMessage(new StringTextComponent("Color: " + meterObject.getColor()), false);
+                    context.getSource().getPlayerOrException().displayClientMessage(new TextComponent("Color: " + meterObject.getColor()), false);
                 }
-                data.markDirty(context.getSource().getWorld());
+                data.markDirty(context.getSource().getLevel());
             }
             return 1;
         }
         return 0;
     }
 
-    private static int add(CommandContext<CommandSource> context) {
-        RaidMeterWorldSavedData data = RaidMeterWorldSavedData.getInstance(context.getSource().getWorld()).orElse(null);
+    private static int add(CommandContext<CommandSourceStack> context) {
+        RaidMeterWorldSavedData data = RaidMeterWorldSavedData.getInstance(context.getSource().getLevel()).orElse(null);
         if (data != null) {
             RaidMeterObject object = new RaidMeterObject(
                     context.getArgument("id", String.class),
@@ -193,12 +193,12 @@ public class RaidMeterCommandHandler {
                     MeterRenderType.valueOf(context.getArgument("type", String.class))
             );
             try {
-                object.getVisibleToPlayers().add(context.getSource().asPlayer().getUniqueID().toString());
+                object.getVisibleToPlayers().add(context.getSource().getPlayerOrException().getUUID().toString());
             } catch (CommandSyntaxException e) {
                 e.printStackTrace();
             }
             data.getMeters().put(context.getArgument("id", String.class), object);
-            data.markDirty(context.getSource().getWorld());
+            data.markDirty(context.getSource().getLevel());
             return 1;
         }
         return 0;

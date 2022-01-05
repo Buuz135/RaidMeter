@@ -2,34 +2,33 @@ package com.buuz135.raidmeter.network;
 
 import com.buuz135.raidmeter.storage.ClientRaidMeterData;
 import io.netty.buffer.ByteBuf;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.network.PacketBuffer;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraftforge.network.NetworkEvent;
 
 import java.util.function.Supplier;
 
 public class RaidMeterSyncMessage implements IMessage {
 
-    private CompoundNBT sync;
+    private CompoundTag sync;
 
     public RaidMeterSyncMessage() {
     }
 
-    public RaidMeterSyncMessage(CompoundNBT sync) {
+    public RaidMeterSyncMessage(CompoundTag sync) {
         this.sync = sync;
     }
 
     @Override
-    public RaidMeterSyncMessage fromBytes(ByteBuf buf) {
-        PacketBuffer packetBuffer = new PacketBuffer(buf);
-        sync = packetBuffer.readCompoundTag();
+    public RaidMeterSyncMessage fromBytes(FriendlyByteBuf packetBuffer) {
+        sync = packetBuffer.readNbt();
         return this;
     }
 
     @Override
     public void toBytes(ByteBuf buf) {
-        PacketBuffer packetBuffer = new PacketBuffer(buf);
-        packetBuffer.writeCompoundTag(sync);
+        FriendlyByteBuf packetBuffer = new FriendlyByteBuf(buf);
+        packetBuffer.writeNbt(sync);
     }
 
     @Override

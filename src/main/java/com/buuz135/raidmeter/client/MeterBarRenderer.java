@@ -7,16 +7,16 @@ import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
-@Mod.EventBusSubscriber(Dist.CLIENT)
+//@Mod.EventBusSubscriber(Dist.CLIENT)
 public class MeterBarRenderer {
 
 
-    @SubscribeEvent
+    //@SubscribeEvent
     public static void render(RenderGameOverlayEvent event) {
-        if (event.getType() == RenderGameOverlayEvent.ElementType.HOTBAR) {
+        if (event.getType() == RenderGameOverlayEvent.ElementType.LAYER) {
             ClientRaidMeterData.DATA.getMeters().values().forEach(raidMeter -> {
-                        if (Minecraft.getInstance().player != null && raidMeter.getVisibleToPlayers().contains(Minecraft.getInstance().player.getUniqueID().toString())){
-                            raidMeter.getMeterRenderType().getRendererSupplier().get().render(event.getMatrixStack(), raidMeter, event.getWindow().getScaledWidth(), event.getWindow().getScaledHeight());
+                        if (Minecraft.getInstance().player != null && raidMeter.getVisibleToPlayers().contains(Minecraft.getInstance().player.getUUID().toString())){
+                            raidMeter.getMeterRenderType().getRendererSupplier().get().render(event.getMatrixStack(), raidMeter, event.getWindow().getGuiScaledWidth(), event.getWindow().getGuiScaledHeight());
                         }
                     }
             );
