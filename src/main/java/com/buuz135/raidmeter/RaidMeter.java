@@ -1,5 +1,6 @@
 package com.buuz135.raidmeter;
 
+import com.buuz135.raidmeter.client.ModOverlayRegistry;
 import com.buuz135.raidmeter.command.RaidMeterCommandHandler;
 import com.buuz135.raidmeter.network.RaidMeterSyncMessage;
 import com.buuz135.raidmeter.storage.ClientRaidMeterData;
@@ -60,14 +61,7 @@ public class RaidMeter {
     }
 
     private void doClientStuff(final FMLClientSetupEvent event) {
-        OverlayRegistry.registerOverlayTop("raidMeter", (gui, mStack, partialTicks, screenWidth, screenHeight) -> {
-            ClientRaidMeterData.DATA.getMeters().values().forEach(raidMeter -> {
-                        if (Minecraft.getInstance().player != null && raidMeter.getVisibleToPlayers().contains(Minecraft.getInstance().player.getUUID().toString())) {
-                            raidMeter.getMeterRenderType().getRendererSupplier().get().render(mStack, raidMeter, screenWidth, screenHeight);
-                        }
-                    }
-            );
-        });
+        ModOverlayRegistry.register();
     }
 
     private void enqueueIMC(final InterModEnqueueEvent event) {
