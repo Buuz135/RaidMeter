@@ -5,6 +5,6 @@ import com.mojang.blaze3d.vertex.PoseStack;
 
 public interface IMeterRenderer {
 
-    void render(PoseStack matrixStack, RaidMeterObject meter, int width, int height);
+    void render(PoseStack matrixStack, RaidMeterObject meter, int width, int height, int index);
 
 }

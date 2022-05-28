@@ -7,6 +7,11 @@ public enum MeterPosition {
     BOTTOM_CENTER(0.5, 1),
     BOTTOM_RIGHT(1, 1),
     BOTTOM_LEFT(0, 1),
+
+    MIDDLE_LEFT(0, 0.45),
+    MIDDLE_RIGHT(1,0.45),
+    MIDDLE_CENTER_LEFT(0.45, 0.45),
+    MIDDLE_CENTER_RIGHT(0.55, 0.45)
     ;
 
 

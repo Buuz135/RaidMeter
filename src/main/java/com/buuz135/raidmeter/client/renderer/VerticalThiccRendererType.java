@@ -18,14 +18,17 @@ public class VerticalThiccRendererType implements IMeterRenderer {
     private final ResourceLocation resourceLocation = new ResourceLocation(RaidMeter.MODID, "textures/gui/bars.png");
 
     @Override
-    public void render(PoseStack matrixStack, RaidMeterObject meter, int width, int height) {
+    public void render(PoseStack matrixStack, RaidMeterObject meter, int width, int height, int index) {
         if (Minecraft.getInstance().level != null){
             MeterPosition position = meter.getMeterPosition();
             int x = (int) (position.getX() * width);
             int y = (int) (position.getY() * height) + 4;
             float fontX = 0;
             if (position.getY() == 1){
-                y -= BAR_HEIGHT + 20;
+                y -= (BAR_HEIGHT + 20) * (index + 1);
+            }
+            if (position.getY() == 0){
+                y += (BAR_HEIGHT + 20) * index ;
             }
             if (position.getX() == 1){
                 x -= BAR_WIDTH + 6;
