@@ -139,9 +139,3 @@ jar {
 }
 
 jar.finalizedBy('reobfJar')
-
-tasks.withType(JavaCompile).configureEach {
-    if (JavaVersion.current().isJava9Compatible()) {
-        it.options.release = 8
-    }
-}
