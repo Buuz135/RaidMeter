@@ -15,7 +15,9 @@ public class ModOverlayRegistry {
                 AtomicInteger index = new AtomicInteger();
                 ClientRaidMeterData.DATA.getMeters().values().forEach(raidMeter -> {
                     if (value == raidMeter.getMeterPosition() && Minecraft.getInstance().player != null && raidMeter.getVisibleToPlayers().contains(Minecraft.getInstance().player.getUUID().toString())) {
-                        raidMeter.getMeterRenderType().getRendererSupplier().get().render(mStack, raidMeter, screenWidth, screenHeight, index.get());
+                        if (raidMeter.getDisplayFor() == -1 || raidMeter.getDisplayFor() > raidMeter.getCurrentVisualDisplayedFor()){
+                            raidMeter.getMeterRenderType().getRendererSupplier().get().render(mStack, raidMeter, screenWidth, screenHeight, index.get());
+                        }
                         index.incrementAndGet();
                     }
                 });

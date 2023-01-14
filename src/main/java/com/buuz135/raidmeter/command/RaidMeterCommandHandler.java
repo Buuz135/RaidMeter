@@ -74,6 +74,7 @@ public class RaidMeterCommandHandler {
                         .then(Commands.literal("name").then(Commands.argument("name", StringArgumentType.string()).executes(context -> modify(context, ModifyType.NAME))))
                         .then(Commands.literal("color").then(Commands.argument("color", StringArgumentType.string()).suggests((context, builder) -> SharedSuggestionProvider.suggest(Arrays.stream(DyeColor.values()).map(Enum::name).collect(Collectors.toList()), builder)).executes(context -> modify(context, ModifyType.COLOR))))
                         .then(Commands.literal("display_add").then(Commands.argument("player", EntityArgument.players()).executes(context -> modify(context, ModifyType.DISPLAY_ADD))))
+                        .then(Commands.literal("display_for").then(Commands.argument("time", IntegerArgumentType.integer(-1, Integer.MAX_VALUE)).executes(context -> modify(context, ModifyType.DISPLAY_FOR))))
                         .then(Commands.literal("display_remove").then(Commands.argument("player", EntityArgument.players()).executes(context -> modify(context, ModifyType.DISPLAY_REMOVE))))
                 );
     }
@@ -138,6 +139,9 @@ public class RaidMeterCommandHandler {
                         }
                     }
                 }
+                if (type == ModifyType.DISPLAY_FOR) {
+                    meterObject.setDisplayFor(context.getArgument("time", Integer.class));
+                }
                 if (type == ModifyType.DISPLAY_REMOVE) {
                     for (ServerPlayer player : context.getArgument("player", EntitySelector.class).findPlayers(context.getSource())) {
                         String uuid = player.getUUID().toString();
@@ -173,6 +177,9 @@ public class RaidMeterCommandHandler {
                 }
                 if (type == ModifyType.COLOR) {
                     context.getSource().getPlayerOrException().displayClientMessage(new TextComponent("Color: " + meterObject.getColor()), false);
+                }
+                if (type == ModifyType.DISPLAY_FOR) {
+                    context.getSource().getPlayerOrException().displayClientMessage(new TextComponent("Display For: " + meterObject.getDisplayFor() + " ticks"), false);
                 }
                 data.markDirty(context.getSource().getLevel());
             }
@@ -214,7 +221,8 @@ public class RaidMeterCommandHandler {
         COLOR,
         SET,
         DISPLAY_ADD,
-        DISPLAY_REMOVE;
+        DISPLAY_REMOVE,
+        DISPLAY_FOR;
     }
 
 }

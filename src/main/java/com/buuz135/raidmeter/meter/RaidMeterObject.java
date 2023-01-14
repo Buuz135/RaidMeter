@@ -24,6 +24,8 @@ public class RaidMeterObject implements INBTSerializable<CompoundTag> {
     private MeterRenderType meterRenderType;
     private int color;
     private List<String> visibleToPlayers;
+    private int displayFor;
+    private int currentVisualDisplayedFor;
 
     public RaidMeterObject(String id, String name, int maxProgress, int currentProgress, MeterPosition meterPosition, MeterRenderType meterRenderType) {
         this.name = name;
@@ -35,6 +37,8 @@ public class RaidMeterObject implements INBTSerializable<CompoundTag> {
         this.id = id;
         this.color = DyeColor.CYAN.getTextColor();
         this.visibleToPlayers = new ArrayList<>();
+        this.displayFor = -1;
+        this.currentVisualDisplayedFor = 0;
     }
 
     public int getMaxProgress() {
@@ -63,32 +67,39 @@ public class RaidMeterObject implements INBTSerializable<CompoundTag> {
 
     public void setCurrentVisualProgress(int currentVisualProgress) {
         this.currentVisualProgress = currentVisualProgress;
+        this.currentVisualDisplayedFor = 0;
     }
 
     public void setName(String name) {
         this.name = name;
+        this.currentVisualDisplayedFor = 0;
     }
 
     public void setMaxProgress(int maxProgress) {
         this.maxProgress = maxProgress;
+        this.currentVisualDisplayedFor = 0;
     }
 
     public void setCurrentProgress(int currentProgress) {
         this.currentProgress = currentProgress;
+        this.currentVisualDisplayedFor = 0;
     }
 
     public void add(int amount){
         RaidMeterEvent.Add add = new RaidMeterEvent.Add(this, amount);
         MinecraftForge.EVENT_BUS.post(add);
         setCurrentProgress(add.getAmount() + this.getCurrentProgress());
+        this.currentVisualDisplayedFor = 0;
     }
 
     public void setMeterPosition(MeterPosition meterPosition) {
         this.meterPosition = meterPosition;
+        this.currentVisualDisplayedFor = 0;
     }
 
     public void setMeterRenderType(MeterRenderType meterRenderType) {
         this.meterRenderType = meterRenderType;
+        this.currentVisualDisplayedFor = 0;
     }
 
     public int getColor() {
@@ -97,6 +108,7 @@ public class RaidMeterObject implements INBTSerializable<CompoundTag> {
 
     public void setColor(int color) {
         this.color = color;
+        this.currentVisualDisplayedFor = 0;
     }
 
     public boolean renderTick(){
@@ -105,7 +117,12 @@ public class RaidMeterObject implements INBTSerializable<CompoundTag> {
             increaseValue *= -1;
         }
         if (this.currentVisualProgress != this.currentProgress){
-            this.currentVisualProgress =  currentVisualProgress + increaseValue;
+            if (increaseValue == 1) this.currentVisualProgress = (int) (currentVisualProgress + (Math.max(increaseValue, (this.currentProgress - this.currentVisualProgress) * 0.1)));
+            else this.currentVisualProgress = (int) (currentVisualProgress + (Math.min(increaseValue, (this.currentProgress - this.currentVisualProgress) * 0.1)));
+            return true;
+        }
+        if (this.currentVisualDisplayedFor < this.displayFor){
+            this.currentVisualDisplayedFor++;
             return true;
         }
         return false;
@@ -129,6 +146,19 @@ public class RaidMeterObject implements INBTSerializable<CompoundTag> {
         return id;
     }
 
+    public int getDisplayFor() {
+        return displayFor;
+    }
+
+    public void setDisplayFor(int displayFor) {
+        this.displayFor = displayFor;
+        this.currentVisualDisplayedFor = 0;
+    }
+
+    public int getCurrentVisualDisplayedFor() {
+        return currentVisualDisplayedFor;
+    }
+
     @Override
     public CompoundTag serializeNBT() {
         CompoundTag compoundNBT = new CompoundTag();
@@ -140,6 +170,8 @@ public class RaidMeterObject implements INBTSerializable<CompoundTag> {
         compoundNBT.putString("MeterPosition", meterPosition.name());
         compoundNBT.putString("MeterType", meterRenderType.name());
         compoundNBT.putInt("Color", color);
+        compoundNBT.putInt("DisplayFor", this.displayFor);
+        compoundNBT.putInt("CurrentDisplayFor", this.currentVisualDisplayedFor);
         if (!visibleToPlayers.isEmpty()){
             CompoundTag players = new CompoundTag();
             for (int i = 0; i < visibleToPlayers.size(); i++) {
@@ -167,5 +199,10 @@ public class RaidMeterObject implements INBTSerializable<CompoundTag> {
                 this.visibleToPlayers.add(players.getString(s));
             }
         }
+        this.displayFor = -1;
+        if (nbt.contains("DisplayFor")){
+            this.displayFor = nbt.getInt("DisplayFor");
+        }
+        this.currentVisualDisplayedFor = nbt.getInt("CurrentDisplayFor");
     }
 }
