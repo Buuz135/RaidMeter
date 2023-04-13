@@ -15,9 +15,9 @@ import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.arguments.selector.EntitySelector;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.DyeColor;
-import net.minecraft.network.chat.TextComponent;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -161,25 +161,25 @@ public class RaidMeterCommandHandler {
             RaidMeterObject meterObject = data.getMeters().get(context.getArgument("id", String.class));
             if (meterObject != null) {
                 if (type == ModifyType.MAX_AMOUNT) {
-                    context.getSource().getPlayerOrException().displayClientMessage(new TextComponent("Max amount: " + meterObject.getMaxProgress()), false);
+                    context.getSource().getPlayerOrException().displayClientMessage(Component.literal("Max amount: " + meterObject.getMaxProgress()), false);
                 }
                 if (type == ModifyType.CURRENT_AMOUNT) {
-                    context.getSource().getPlayerOrException().displayClientMessage(new TextComponent("Current amount: " + meterObject.getCurrentProgress()), false);
+                    context.getSource().getPlayerOrException().displayClientMessage(Component.literal("Current amount: " + meterObject.getCurrentProgress()), false);
                 }
                 if (type == ModifyType.POSITION) {
-                    context.getSource().getPlayerOrException().displayClientMessage(new TextComponent("Position: " + meterObject.getMeterPosition().name()), false);
+                    context.getSource().getPlayerOrException().displayClientMessage(Component.literal("Position: " + meterObject.getMeterPosition().name()), false);
                 }
                 if (type == ModifyType.TYPE) {
-                    context.getSource().getPlayerOrException().displayClientMessage(new TextComponent("Type: " + meterObject.getMeterRenderType().name()), false);
+                    context.getSource().getPlayerOrException().displayClientMessage(Component.literal("Type: " + meterObject.getMeterRenderType().name()), false);
                 }
                 if (type == ModifyType.NAME) {
-                    context.getSource().getPlayerOrException().displayClientMessage(new TextComponent("Name: " + meterObject.getName()), false);
+                    context.getSource().getPlayerOrException().displayClientMessage(Component.literal("Name: " + meterObject.getName()), false);
                 }
                 if (type == ModifyType.COLOR) {
-                    context.getSource().getPlayerOrException().displayClientMessage(new TextComponent("Color: " + meterObject.getColor()), false);
+                    context.getSource().getPlayerOrException().displayClientMessage(Component.literal("Color: " + meterObject.getColor()), false);
                 }
                 if (type == ModifyType.DISPLAY_FOR) {
-                    context.getSource().getPlayerOrException().displayClientMessage(new TextComponent("Display For: " + meterObject.getDisplayFor() + " ticks"), false);
+                    context.getSource().getPlayerOrException().displayClientMessage(Component.literal("Display For: " + meterObject.getDisplayFor() + " ticks"), false);
                 }
                 data.markDirty(context.getSource().getLevel());
             }

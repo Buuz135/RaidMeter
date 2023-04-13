@@ -9,8 +9,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.client.gui.IIngameOverlay;
-import net.minecraftforge.client.gui.OverlayRegistry;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
@@ -34,7 +32,6 @@ public class RaidMeter {
     // Directly reference a log4j logger.
     private static final Logger LOGGER = LogManager.getLogger();
     public static final String MODID = "raidmeter";
-    public static IIngameOverlay METER_ELEMENT;
 
     public static final SimpleChannel NETWORK = NetworkRegistry.newSimpleChannel(
             new ResourceLocation("raidmeter", "network"),
@@ -62,7 +59,7 @@ public class RaidMeter {
     }
 
     private void doClientStuff(final FMLClientSetupEvent event) {
-        ModOverlayRegistry.register();
+
     }
 
     private void enqueueIMC(final InterModEnqueueEvent event) {
@@ -78,9 +75,9 @@ public class RaidMeter {
 
     @SubscribeEvent
     public void onPlayerLogged(PlayerEvent.PlayerLoggedInEvent event){
-        RaidMeterWorldSavedData data = RaidMeterWorldSavedData.getInstance(event.getPlayer().level).orElse(null);
-        if (data != null && event.getPlayer() instanceof ServerPlayer) {
-            RaidMeter.NETWORK.sendTo(new RaidMeterSyncMessage(data.save(new CompoundTag())), ((ServerPlayer)event.getPlayer()).connection.getConnection(), NetworkDirection.PLAY_TO_CLIENT);
+        RaidMeterWorldSavedData data = RaidMeterWorldSavedData.getInstance(event.getEntity().level).orElse(null);
+        if (data != null && event.getEntity() instanceof ServerPlayer) {
+            RaidMeter.NETWORK.sendTo(new RaidMeterSyncMessage(data.save(new CompoundTag())), ((ServerPlayer)event.getEntity()).connection.getConnection(), NetworkDirection.PLAY_TO_CLIENT);
         }
     }
 

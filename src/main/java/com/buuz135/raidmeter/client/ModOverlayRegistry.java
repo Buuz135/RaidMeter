@@ -3,14 +3,19 @@ package com.buuz135.raidmeter.client;
 import com.buuz135.raidmeter.storage.ClientRaidMeterData;
 import com.buuz135.raidmeter.util.MeterPosition;
 import net.minecraft.client.Minecraft;
-import net.minecraftforge.client.gui.OverlayRegistry;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.event.RegisterGuiOverlaysEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
+@Mod.EventBusSubscriber(value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class ModOverlayRegistry {
 
-    public static void register(){
-        OverlayRegistry.registerOverlayTop("raidMeter", (gui, mStack, partialTicks, screenWidth, screenHeight) -> {
+    @SubscribeEvent
+    public static void register(RegisterGuiOverlaysEvent event){
+        event.registerAboveAll("raidmeter", (gui, mStack, partialTicks, screenWidth, screenHeight) -> {
             for (MeterPosition value : MeterPosition.values()) {
                 AtomicInteger index = new AtomicInteger();
                 ClientRaidMeterData.DATA.getMeters().values().forEach(raidMeter -> {
