@@ -42,7 +42,7 @@ public class RaidMeterWorldSavedData extends SavedData {
         super.setDirty();
         if (world instanceof ServerLevel) {
             ServerLevel serverWorld = ((ServerLevel) world).getServer().getLevel(Level.OVERWORLD);
-            serverWorld.getServer().getPlayerList().getPlayers().forEach(serverPlayerEntity -> RaidMeter.NETWORK.sendTo(new RaidMeterSyncMessage(this.save(new CompoundTag())), serverPlayerEntity.connection.getConnection(), NetworkDirection.PLAY_TO_CLIENT));
+            serverWorld.getServer().getPlayerList().getPlayers().forEach(serverPlayerEntity -> RaidMeter.NETWORK.sendTo(new RaidMeterSyncMessage(this.save(new CompoundTag())), serverPlayerEntity.connection.connection, NetworkDirection.PLAY_TO_CLIENT));
         }
     }
 

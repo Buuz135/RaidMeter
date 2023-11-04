@@ -75,9 +75,9 @@ public class RaidMeter {
 
     @SubscribeEvent
     public void onPlayerLogged(PlayerEvent.PlayerLoggedInEvent event){
-        RaidMeterWorldSavedData data = RaidMeterWorldSavedData.getInstance(event.getEntity().level).orElse(null);
+        RaidMeterWorldSavedData data = RaidMeterWorldSavedData.getInstance(event.getEntity().level()).orElse(null);
         if (data != null && event.getEntity() instanceof ServerPlayer) {
-            RaidMeter.NETWORK.sendTo(new RaidMeterSyncMessage(data.save(new CompoundTag())), ((ServerPlayer)event.getEntity()).connection.getConnection(), NetworkDirection.PLAY_TO_CLIENT);
+            RaidMeter.NETWORK.sendTo(new RaidMeterSyncMessage(data.save(new CompoundTag())), ((ServerPlayer)event.getEntity()).connection.connection, NetworkDirection.PLAY_TO_CLIENT);
         }
     }
 
