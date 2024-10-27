@@ -76,6 +76,9 @@ public class RaidMeterCommandHandler {
                         .then(Commands.literal("display_add").then(Commands.argument("player", EntityArgument.players()).executes(context -> modify(context, ModifyType.DISPLAY_ADD))))
                         .then(Commands.literal("display_for").then(Commands.argument("time", IntegerArgumentType.integer(-1, Integer.MAX_VALUE)).executes(context -> modify(context, ModifyType.DISPLAY_FOR))))
                         .then(Commands.literal("display_remove").then(Commands.argument("player", EntityArgument.players()).executes(context -> modify(context, ModifyType.DISPLAY_REMOVE))))
+                        .then(Commands.literal("ticking_time").then(Commands.argument("tick_frequency", IntegerArgumentType.integer(0, Integer.MAX_VALUE)).executes(context -> modify(context, ModifyType.TICKING_TIME))))
+                        .then(Commands.literal("ticking_change_amount").then(Commands.argument("amount", IntegerArgumentType.integer(Integer.MIN_VALUE, Integer.MAX_VALUE)).executes(context -> modify(context, ModifyType.TICKING_CHANGE_AMOUNT))))
+
                 );
     }
 
@@ -89,6 +92,8 @@ public class RaidMeterCommandHandler {
                         .then(Commands.literal("type").executes(context -> info(context, ModifyType.TYPE)))
                         .then(Commands.literal("name").executes(context -> info(context, ModifyType.NAME)))
                         .then(Commands.literal("color").executes(context -> info(context, ModifyType.COLOR)))
+                        .then(Commands.literal("ticking_time").executes(context -> info(context, ModifyType.TICKING_TIME)))
+                        .then(Commands.literal("ticking_change_amount").executes(context -> info(context, ModifyType.TICKING_CHANGE_AMOUNT)))
                 );
     }
 
@@ -148,6 +153,12 @@ public class RaidMeterCommandHandler {
                         meterObject.getVisibleToPlayers().remove(uuid);
                     }
                 }
+                if (type == ModifyType.TICKING_TIME){
+                    meterObject.setTickingTime(context.getArgument("tick_frequency", Integer.class));
+                }
+                if (type == ModifyType.TICKING_CHANGE_AMOUNT){
+                    meterObject.setTickingChangeAmount(context.getArgument("amount", Integer.class));
+                }
                 data.markDirty(context.getSource().getLevel());
             }
             return 1;
@@ -180,6 +191,12 @@ public class RaidMeterCommandHandler {
                 }
                 if (type == ModifyType.DISPLAY_FOR) {
                     context.getSource().getPlayerOrException().displayClientMessage(Component.literal("Display For: " + meterObject.getDisplayFor() + " ticks"), false);
+                }
+                if (type == ModifyType.TICKING_TIME) {
+                    context.getSource().getPlayerOrException().displayClientMessage(Component.literal("Ticking every: " + meterObject.getTickingTime() + " ticks"), false);
+                }
+                if (type == ModifyType.TICKING_CHANGE_AMOUNT) {
+                    context.getSource().getPlayerOrException().displayClientMessage(Component.literal("Changing each time it ticks: " + meterObject.getTickingChangeAmount()), false);
                 }
                 data.markDirty(context.getSource().getLevel());
             }
@@ -222,7 +239,9 @@ public class RaidMeterCommandHandler {
         SET,
         DISPLAY_ADD,
         DISPLAY_REMOVE,
-        DISPLAY_FOR;
+        DISPLAY_FOR,
+        TICKING_TIME,
+        TICKING_CHANGE_AMOUNT;
     }
 
 }

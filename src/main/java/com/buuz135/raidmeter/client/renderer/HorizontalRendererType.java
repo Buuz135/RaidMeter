@@ -24,6 +24,15 @@ public class HorizontalRendererType implements IMeterRenderer {
             int x = (int) (position.getX() * width);
             int y = (int) (position.getY() * height) + 4;
             float fontX = 0;
+            float timeX = 0;
+
+            String time = "0:00";
+            var remaining = meter.getMaxProgress() - meter.getCurrentProgress();
+            if (meter.getTickingChangeAmount() < 0){
+                remaining = meter.getCurrentProgress();
+            }
+            time = remaining / 60 + ":" + ((remaining % 60) < 10 ? "0" : "") + (remaining % 60);
+
             if (position.getY() == 0){
                 y += (BAR_HEIGHT * 2) * index;
             }
@@ -33,12 +42,15 @@ public class HorizontalRendererType implements IMeterRenderer {
             if (position.getX() == 1){
                 x -= (BAR_WIDTH + 6);
                 fontX = x + BAR_WIDTH - Minecraft.getInstance().font.width(meter.getName()) - 4;
+                timeX = x + BAR_WIDTH - Minecraft.getInstance().font.width(time) - 6;
             } else if (position.getX() != 0){
                 x -= BAR_WIDTH / 2;
                 fontX = x + BAR_WIDTH - BAR_WIDTH /2F - Minecraft.getInstance().font.width(meter.getName()) /2F;
+                timeX = x + BAR_WIDTH - BAR_WIDTH /2F - Minecraft.getInstance().font.width(time) /2F;
             } else {
                 x += 6;
                 fontX = x + 6;
+                timeX = x + 7;
             }
             if (position == MeterPosition.BOTTOM_CENTER){
                 y -= 45;
@@ -49,6 +61,11 @@ public class HorizontalRendererType implements IMeterRenderer {
             Color color = new Color(meter.getColor());
             RenderSystem.setShaderColor(color.getRed() /255f, color.getGreen() /255f, color.getBlue() /255f, 1.0F);
             guiGraphics.blit(new ResourceLocation(RaidMeter.MODID, "textures/gui/bar_inside.png"), x + 5, y + 3, 1- Minecraft.getInstance().level.getGameTime() % 256,  (float) Math.sin(Minecraft.getInstance().level.getGameTime() / 15D) * 25, (int) ((BAR_WIDTH - 10) * (meter.getCurrentVisualProgress() / (double) meter.getMaxProgress())), BAR_HEIGHT - 6, 256, 256);
+            RenderSystem.setShaderColor(1, 1, 1, 1.0F);
+            y += 4;
+            if (meter.getTickingTime() > 0) {
+                guiGraphics.drawString(Minecraft.getInstance().font, time, timeX, y, 0xFFFFFF, true);
+            }
         }
     }
 }

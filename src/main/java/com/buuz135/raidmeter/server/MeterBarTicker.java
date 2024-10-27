@@ -10,11 +10,11 @@ import net.minecraftforge.fml.common.Mod;
 public class MeterBarTicker {
 
     @SubscribeEvent
-    public static void render(TickEvent.LevelTickEvent event) {
-        if (event.phase == TickEvent.Phase.END){
-            RaidMeterWorldSavedData.getInstance(event.level).ifPresent(raidMeterWorldSavedData -> raidMeterWorldSavedData.getMeters().values().forEach(raidMeterObject -> {
-                if (raidMeterObject.tick()){
-                    raidMeterWorldSavedData.markDirty(event.level);
+    public static void render(TickEvent.ServerTickEvent event) {
+        if (event.phase == TickEvent.Phase.END && event.haveTime()){
+            RaidMeterWorldSavedData.getInstance(event.getServer().overworld()).ifPresent(raidMeterWorldSavedData -> raidMeterWorldSavedData.getMeters().values().forEach(raidMeterObject -> {
+                if (raidMeterObject.tick(event.getServer().overworld())){
+                    raidMeterWorldSavedData.markDirty(event.getServer().overworld());
                 }
             }));
         }

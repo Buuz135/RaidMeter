@@ -3,9 +3,9 @@ package com.buuz135.raidmeter.meter;
 import com.buuz135.raidmeter.event.RaidMeterEvent;
 import com.buuz135.raidmeter.util.MeterPosition;
 import com.buuz135.raidmeter.util.MeterRenderType;
-import net.minecraft.client.Minecraft;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.util.INBTSerializable;
 
@@ -26,6 +26,8 @@ public class RaidMeterObject implements INBTSerializable<CompoundTag> {
     private List<String> visibleToPlayers;
     private int displayFor;
     private int currentVisualDisplayedFor;
+    private int tickingTime;
+    private int tickingChangeAmount;
 
     public RaidMeterObject(String id, String name, int maxProgress, int currentProgress, MeterPosition meterPosition, MeterRenderType meterRenderType) {
         this.name = name;
@@ -39,6 +41,8 @@ public class RaidMeterObject implements INBTSerializable<CompoundTag> {
         this.visibleToPlayers = new ArrayList<>();
         this.displayFor = -1;
         this.currentVisualDisplayedFor = 0;
+        this.tickingTime = 0;
+        this.tickingChangeAmount = 0;
     }
 
     public int getMaxProgress() {
@@ -111,6 +115,22 @@ public class RaidMeterObject implements INBTSerializable<CompoundTag> {
         this.currentVisualDisplayedFor = 0;
     }
 
+    public int getTickingTime() {
+        return tickingTime;
+    }
+
+    public void setTickingTime(int tickingTime) {
+        this.tickingTime = tickingTime;
+    }
+
+    public int getTickingChangeAmount() {
+        return tickingChangeAmount;
+    }
+
+    public void setTickingChangeAmount(int tickingChangeAmount) {
+        this.tickingChangeAmount = tickingChangeAmount;
+    }
+
     public boolean renderTick(){
         int increaseValue = 1;
         if (this.currentProgress < this.currentVisualProgress){
@@ -128,10 +148,18 @@ public class RaidMeterObject implements INBTSerializable<CompoundTag> {
         return false;
     }
 
-    public boolean tick(){
+    public boolean tick(Level level){
         boolean render = renderTick();
-        if (this.currentVisualProgress >= this.maxProgress){
-            this.currentProgress = Math.max(0 , this.currentProgress - this.maxProgress);
+        if (this.tickingTime > 0 && level.getGameTime() % this.tickingTime == 0){
+            if (this.tickingChangeAmount > 0 && this.currentProgress < this.maxProgress){
+                this.currentProgress = Math.min(this.maxProgress, this.tickingChangeAmount + this.currentProgress);
+            } else if (this.tickingChangeAmount < 0 && this.currentProgress > 0){
+                this.currentProgress = Math.max(0, this.currentProgress + this.tickingChangeAmount);
+            }
+            render = true;
+        }
+        if (this.currentVisualProgress >= this.maxProgress || (this.tickingTime > 0 && this.tickingChangeAmount < 0 && this.currentProgress <= 0)){
+            if (this.tickingTime == 0) this.currentProgress = Math.max(0 , this.currentProgress - this.maxProgress);
             MinecraftForge.EVENT_BUS.post(new RaidMeterEvent.Complete(this));
             return true;
         }
@@ -179,6 +207,8 @@ public class RaidMeterObject implements INBTSerializable<CompoundTag> {
             }
             compoundNBT.put("VisiblePlayers", players);
         }
+        compoundNBT.putInt("TickingTime", tickingTime);
+        compoundNBT.putInt("TickingDecreaseAmount", tickingChangeAmount);
         return compoundNBT;
     }
 
@@ -204,5 +234,11 @@ public class RaidMeterObject implements INBTSerializable<CompoundTag> {
             this.displayFor = nbt.getInt("DisplayFor");
         }
         this.currentVisualDisplayedFor = nbt.getInt("CurrentDisplayFor");
+        if (nbt.contains("TickingTime")){
+            this.tickingTime = nbt.getInt("TickingTime");
+        }
+        if (nbt.contains("TickingDecreaseAmount")){
+            this.tickingChangeAmount = nbt.getInt("TickingDecreaseAmount");
+        }
     }
 }
